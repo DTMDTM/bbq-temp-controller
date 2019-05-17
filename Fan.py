@@ -1,4 +1,4 @@
-import RPi.GPIO as GPIO
+import pigpio
 from StateListener import *
 from time import *
 import time,threading
@@ -6,38 +6,19 @@ import time,threading
 
 
 class Fan(StateListener):
-    cycleTime = 10
-    onTime = 0
-    offTime = cycleTime
-
+    pi = pigpio.pi()
+    airflowPerc = 0
 
     def __init__(self, stateController):
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setwarnings(False)
-        GPIO.setup(5, GPIO.OUT) # FAN
-
         stateController.addStateListener(self)
-        threading.Timer(1, self.onTimer).start()
-
-    def onTimer(self):
-        if (self.onTime==0):
-            self.fanOff()
-            threading.Timer(self.cycleTime, self.onTimer).start()
-        else:
-            self.fanOn()
-            threading.Timer(self.onTime, self.closeFan).start()
-
-    def closeFan(self):
-        self.fanOff()
-        threading.Timer(self.offTime, self.onTimer).start()
-
-    def fanOff(self):
-        GPIO.output(5, GPIO.LOW)
-
-    def fanOn(self):
-        GPIO.output(5, GPIO.HIGH)
+        self.pi.write(16, 1) # Zet H-brug aan via GPIO-16
 
     def stateChanged(self, state):
         self.airflowPerc = state.airflowPerc
-        self.onTime = self.cycleTime*self.airflowPerc/100.0
-        self.offTime = self.cycleTime - self.onTime
+
+        if(self.airflowPerc < 15):
+            self.pi.write(16, 0)
+        else:
+            self.pi.write(16, 1)
+  
+        self.pi.hardware_PWM(12, 100, 10000 * self.airflowPerc)

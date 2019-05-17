@@ -53,6 +53,9 @@ class AirflowCalculator():
         pass
 
     def calcAirflow(self, bbqTempSet, currentTemp, lastTemp, currentAirflow):
+        if(currentTemp is None or lastTemp is None):
+            return 0
+
         tempVerschil = currentTemp - bbqTempSet
         tempStijging = currentTemp - lastTemp
         regelingRecord = self.findRecord(tempVerschil)

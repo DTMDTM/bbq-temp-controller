@@ -112,11 +112,13 @@ class ScreenController(InputListener, StateListener):
 
     def _drawScreenBbqTemp(self):
         state = self._currentState
-        self._display.display("BBQ  : "+"{0:.2f}".format(state.bbqTemp)+" ("+str(state.bbqTempSet)+")", 1)
+        toDisplay = "-" if(state.bbqTemp is None) else "{0:.2f}".format(state.bbqTemp)
+        self._display.display("BBQ  : "+ toDisplay + " ("+str(state.bbqTempSet)+")", 1)
 
     def _drawScreenMeatTemp(self):
         state = self._currentState
-        self._display.display("Vlees: "+"{0:.2f}".format(state.meatTemp)+" ("+str(state.meatTempSet)+")", 2)
+        toDisplay = "-" if(state.meatTemp is None) else "{0:.2f}".format(state.meatTemp)
+        self._display.display("Vlees: "+ toDisplay + " ("+str(state.meatTempSet)+")", 2)
 
     def _drawScreenAirflow(self):
         state = self._currentState

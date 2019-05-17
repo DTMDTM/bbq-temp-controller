@@ -1,6 +1,5 @@
 import threading, copy
 from State import *
-import Adafruit_ADS1x15
 from StateListener import *
 from AirflowCalculator import *
 
