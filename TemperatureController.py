@@ -1,12 +1,20 @@
 import threading, copy, sys
 from State import *
 from TemperatureConverter import *
-import Adafruit_ADS1x15
+import board
+import busio
+import adafruit_ads1x15.ads1015 as ADS
+from adafruit_ads1x15.analog_in import AnalogIn
 
 class TemperatureController:
     stateController = {}
-    _adc = Adafruit_ADS1x15.ADS1015()
     temperatureConverter = TemperatureConverter()
+    i2c = busio.I2C(board.SCL, board.SDA)
+    ads = ADS.ADS1015(i2c)
+    ads.gain = 2/3
+    adcVoltageConstant = 5/26544 # Defined by the measurement without any probes attached
+    meatChannel = AnalogIn(ads, ADS.P3) # Blauw-paarsje draadjes
+    bbqChannel = AnalogIn(ads, ADS.P2) # Groen-gele draadjes
 
     def __init__(self, stateController):
         self.stateController = stateController
@@ -14,8 +22,8 @@ class TemperatureController:
 
     def onTimer(self):
         threading.Timer(1, self.onTimer).start()
-        bbqTemp = self.temperatureConverter.convertBbq(self._adc.read_adc(3, gain=1))
-        meatTemp = self.temperatureConverter.convertMeat(self._adc.read_adc(2, gain=1))
+        bbqTemp = self.temperatureConverter.convertBbq(self.bbqChannel.value * self.adcVoltageConstant)
+        meatTemp = self.temperatureConverter.convertMeat(self.meatChannel.value * self.adcVoltageConstant)
         self._updateState(bbqTemp, meatTemp)
 
 

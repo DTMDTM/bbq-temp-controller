@@ -1,90 +1,34 @@
-# import reversed
+import math
 
 class TemperatureConverter:
-    listOfCalibrationValuesBbq = [
-        (1620,0),
-        (1580,10),
-        (1537,20),
-        (1484,30),
-        (1416,40),
-        (1318,50),
-        (1207,60),
-        (1075,70),
-        (943,80),
-        (815,90),
-        (673,100),
-        (510,110),
-        (415,120),
-        (335,130),
-        (290,140),
-        (232,150),
-        (195,160),
-        (172,170),
-        (141,180),
-        (113,190),
-        (94,200),
-        (55,230),
-        (30,300)
-         ]
 
-    listOfCalibrationValuesMeat = [
-        (1680,0),
-        (1495,44),
-        (1455,51),
-        (1415,56),
-        (1400,58),
-        (1383,60),
-        (1360,63),
-        (1340,65),
-        (1317,68),
-        (1300,70),
-        (1286,72),
-        (1264,74),
-        (1240,76),
-        (1212,79),
-        (1192,81),
-        (1174,83),
-        (1152,85),
-        (1134,87),
-        (1040,96),
-        (1024,97),
-        (990,100),
-        (0,200)
-    ]
+    resistorValueBbq = 10000 # We use 10k resistors for both probes but they measured differently
+    resistorValueMeat = 10020 
 
-    def convertBbq(self, value):
-        return self._convert(value, self.listOfCalibrationValuesBbq)
+    curvedProbeBeta = 4008 
+    curvedProbeR25 = 91240
+    straightProbeBeta = 4329
+    straightProbeR25 = 232300
+
+    def convertBbq(self, voltage):
+        return self._convert(voltage, self.curvedProbeBeta, self.curvedProbeR25)
 
 
-    def convertMeat(self, value):
-        return self._convert(value, self.listOfCalibrationValuesMeat)
+    def convertMeat(self, voltage):
+        return self._convert(voltage, self.straightProbeBeta, self.straightProbeR25)
 
-    def _convert(self, value, calibrationList):
-        lowCalibrationValue = self.getLowCalibration(value, calibrationList)
-        highCalibrationValue = self.getHighCalibration(value, calibrationList)
+    def _convert(self, voltage, beta, r25):
+        T25 = 273.15 + 25
+        resistance = self._getResistance(voltage)
+        
+        if(resistance is None):
+            return None
 
-        lowVal = lowCalibrationValue[0]
-        highVal = highCalibrationValue[0]
-        highTemp = lowCalibrationValue[1]
-        lowTemp = highCalibrationValue[1]
-        if (value==lowVal) : return lowTemp
-        if (value==highVal) : return highTemp
+        temp = 1 / (math.log(resistance/r25)/beta + (1/T25))
 
-        valueDelta = highVal-lowVal
-        tempDelta = highTemp - lowTemp
+        return temp - 273.15
 
-        tempDiffPerValue = tempDelta/float(valueDelta)
-        temp = highTemp - tempDiffPerValue*(value-lowVal)
-        return temp
-
-    def getLowCalibration(self, value, calibrationList):
-        for cal in calibrationList:
-            calValue = cal[0]
-            if (calValue<=value): return cal
-        return (0,1000)   # when not found
-
-    def getHighCalibration(self, value, calibrationList):
-        for cal in reversed(calibrationList):
-            calValue = cal[0]
-            if (calValue>=value): return cal
-        return (99999,-100)   # when not found
+    def _getResistance(self, voltage):
+        if(voltage >= 5):
+            return None
+        return (10000 * voltage) / (5 - voltage) 
